@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <a href="/agregaMedico">Agregar Medico</a>
+    <br><br>
+    <table class="table table-sm">
+        <thead>
+        <tr>
+            <th>Id Medico</th>
+            <th>Nombre</th>
+            <th>Especialidad</th>
+            <th>Foto</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for med in res %}
+            <tr>
+                <td>{{med[0]}}</td>
+                <td>{{med[1]}}</td>
+                <td>{{med[2]}}</td>
+                <td><img width="100px" src="uploads/{{med[4]}}" alt=""></td>
+                
+
+                <td><a href="/updateMedico/{{med[0]}}">Editar</a></td>
+                <td><a onclick="return confirm('Seguro quiere eliminar este medico?')" href="/deleteMedico/{{med[0]}}">Borrar</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
