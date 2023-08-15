@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, redirect, flash, session, sen
 import os
 from flaskext.mysql import MySQL
 from datetime import timedelta, datetime
+from medicos import Medicos
 
 programa = Flask(__name__)
 programa.secret_key = str(randint(10000, 99999))
@@ -18,6 +19,8 @@ mysql.init_app(programa)
 
 conexion = mysql.connect()
 cursor = conexion.cursor()
+
+losMedicos = Medicos(mysql)
 
 @programa.route('/')
 def index():
@@ -97,11 +100,7 @@ def principal():
 @programa.route('/medicos')
 def medicos():
     if session.get("logueado"):
-        consulta = "SELECT * FROM medicos WHERE activo = 1"
-
-        cursor.execute(consulta)
-        resultados = cursor.fetchall()
-        conexion.commit()
+        resultados = losMedicos.consultar()
 
         return render_template('/medicos.html', res = resultados)
     else:
@@ -116,40 +115,25 @@ def agregaMedico():
 
 @programa.route('/guardaMedico', methods = ['POST'])
 def guardaMedico():
+
     if session.get("logueado"):
+
         id = request.form['txtId']
         nombre = request.form['txtNombre']
         especialidad = request.form['txtEspe']
         foto = request.files['txtFoto']
 
-        consultaMedicos = f"SELECT * FROM medicos WHERE idmedico = '{id}'"
+        if not losMedicos.buscarMedico(id):
 
-        conexion = mysql.connect()
-        cursor = conexion.cursor()
-        cursor.execute(consultaMedicos)
-
-        resultado = cursor.fetchone()
-
-        conexion.commit()
-
-        if not resultado:
-
-            ahora = datetime.now()
-            tiempo = ahora.strftime("%Y%m%d%H%M%S")
-            nom, extension = os.path.splitext(foto.filename)
-            nombreFoto = "F" + tiempo + extension
-            foto.save("uploads/"+nombreFoto)
-
-            consulta = f"INSERT INTO medicos (idmedico, nombre, especialidad, foto, activo) VALUES ('{id}','{nombre}','{especialidad}','{nombreFoto}', 1)"
-
-            cursor.execute(consulta)
-            conexion.commit()
+            losMedicos.agregar([id, nombre, especialidad, foto])
 
             return redirect('/medicos')
         
         else: 
+
             return render_template('agregaMedico.html' , men = 'ID de medico no disponible')
     else:
+
         return render_template("login.html")
     
 @programa.route('/updateMedico/<id>', methods=['GET'])
@@ -201,11 +185,9 @@ def updateMedicos():
 @programa.route('/deleteMedico/<id>')
 def deleteMedico(id):
     if session.get("logueado"):
-        consulta = f"UPDATE medicos SET activo = 0 WHERE idmedico = '{id}'"
-        conexion = mysql.connect()
-        cursor = conexion.cursor()
-        cursor.execute(consulta)
-        conexion.commit()
+        
+        losMedicos.borrar(id)
+
         return redirect('/medicos')
     else:
         return render_template("login.html")
